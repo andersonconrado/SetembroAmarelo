@@ -7,7 +7,9 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- TROCAMOS A BIBLIOTECA PARA UMA MAIS MODERNA (COMPATÍVEL COM iPHONE) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 
     <style>
         body {
@@ -33,6 +35,7 @@
         .text-backdrop {
             background: rgba(255, 255, 255, 0.70); 
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.5);
         }
@@ -95,6 +98,8 @@
                 <div class="absolute top-[-20%] left-[-20%] w-72 h-72 z-10 pointer-events-none" style="background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%); border-radius: 50%;"></div>
                 
                 <div class="w-full z-20 relative flex flex-col items-center gap-20 mt-4">
+                    
+                    <!-- Lembre-se de manter aqui o código em Base64 que você colocou antes! -->
                     <img 
                         src="data:image/png;base64,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" 
                         alt="Logo da Campanha" 
@@ -222,69 +227,39 @@
             }
         });
 
-       btnDownload.addEventListener('click', function() {
+        btnDownload.addEventListener('click', function() {
             const originalContent = btnDownload.innerHTML;
             btnDownload.innerHTML = 'Gerando Imagem...';
             btnDownload.disabled = true;
             btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
 
-            // 1. CORREÇÃO DO SCROLL
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-            // 2. CORREÇÃO DO DESFOQUE (BLUR) PARA O iPHONE NÃO BLOQUEAR
-            const textBackdrop = document.querySelector('.text-backdrop');
-            textBackdrop.style.backdropFilter = 'none';
-            textBackdrop.style.webkitBackdropFilter = 'none';
-
-            setTimeout(function() {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-                html2canvas(storyCard, {
-                    scale: isIOS ? 1.5 : 2,           
-                    useCORS: true,      
-                    backgroundColor: '#fde047', // Garante o fundo amarelo no JPEG
-                    logging: false,
-                    scrollY: -window.scrollY 
-                }).then(function(canvas) {
-                    
-                    // Religa o efeito de desfoque assim que a foto for tirada
-                    textBackdrop.style.backdropFilter = '';
-                    textBackdrop.style.webkitBackdropFilter = '';
-
-                    try {
-                        // 3. CORREÇÃO DE MEMÓRIA: Exportando como JPEG (0.9 de qualidade) em vez de PNG
-                        const imageURI = canvas.toDataURL("image/jpeg", 0.9);
-
-                        if (isIOS) {
-                            iosImage.src = imageURI;
-                            iosModal.classList.remove('hidden');
-                            iosModal.classList.add('flex');
-                        } else {
-                            const link = document.createElement("a");
-                            link.download = "Setembro-Amarelo-TJPI-Story.jpg";
-                            link.href = imageURI;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        }
-                    } catch (e) {
-                        showError("Erro do sistema Apple. Tente recarregar a página.");
-                        console.error("Erro no toDataURL:", e);
-                    }
-
-                    resetButton(originalContent);
-                    
-                }).catch(function(err) {
-                    // Religa o desfoque caso dê erro
-                    textBackdrop.style.backdropFilter = '';
-                    textBackdrop.style.webkitBackdropFilter = '';
-                    
-                    console.error("Erro interno no html2canvas:", err);
-                    showError("Erro ao gerar. Tente recarregar a página.");
-                    resetButton(originalContent);
-                });
-
-            }, 300);
+            // Usa a biblioteca htmlToImage, que é imune aos bloqueios de segurança do iPhone 13
+            htmlToImage.toJpeg(storyCard, { 
+                quality: 0.95,
+                pixelRatio: isIOS ? 2 : 3
+            })
+            .then(function(dataUrl) {
+                if (isIOS) {
+                    iosImage.src = dataUrl;
+                    iosModal.classList.remove('hidden');
+                    iosModal.classList.add('flex');
+                } else {
+                    const link = document.createElement("a");
+                    link.download = "Setembro-Amarelo-TJPI-Story.jpg";
+                    link.href = dataUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                resetButton(originalContent);
+            })
+            .catch(function(error) {
+                console.error("Erro no html-to-image:", error);
+                showError("Erro ao gerar a imagem. Tente novamente.");
+                resetButton(originalContent);
+            });
 
             function resetButton(content) {
                 btnDownload.innerHTML = content;
