@@ -49,13 +49,13 @@
 
 <body class="min-h-screen text-gray-800 flex flex-col items-center py-12 px-4 relative">
 
-    <!-- MODAL PARA iPHONE (Fica escondido até precisar) -->
-    <div id="iosModal" class="fixed inset-0 bg-yellow-100 z-[100] hidden flex-col items-center justify-center p-4">
-        <button id="closeModal" class="absolute top-6 right-6 text-gray-800 font-bold text-lg bg-white px-4 py-2 rounded-full shadow-md">✕ Fechar</button>
-        <img id="iosImage" src="" alt="Story Gerado" class="max-w-[90%] md:max-w-md rounded-2xl shadow-2xl mb-6">
-        <p class="text-xl text-gray-800 font-bold text-center px-4 bg-white/70 py-3 rounded-xl">
-            Pressione e segure a imagem para salvar.
+    <!-- MODAL PARA iPHONE -->
+    <div id="iosModal" class="fixed inset-0 bg-yellow-400 z-[9999] hidden flex-col items-center justify-center p-4">
+        <button id="closeModal" class="absolute top-6 right-6 text-gray-800 font-bold text-lg bg-white px-5 py-2 rounded-full shadow-lg">✕ Voltar</button>
+        <p class="text-xl md:text-2xl text-gray-900 font-extrabold text-center mb-4">
+            👇 Pressione a imagem e segure <br> para Salvar ou Compartilhar
         </p>
+        <img id="iosImage" src="" alt="Story Gerado" class="max-w-[85%] md:max-w-md rounded-2xl shadow-2xl border-4 border-white">
     </div>
 
     <!-- TOAST DE ERRO -->
@@ -171,7 +171,7 @@
         const resultSection = document.getElementById('resultSection');
         const errorToast = document.getElementById('errorToast');
         
-        // Modal de iOS
+        // Elementos do Modal
         const iosModal = document.getElementById('iosModal');
         const iosImage = document.getElementById('iosImage');
         const closeModal = document.getElementById('closeModal');
@@ -191,7 +191,6 @@
 
         function generateStory() {
             let name = inputName.value.trim();
-            
             if (!name) {
                 name = "Amigo(a)";
             } else {
@@ -199,10 +198,7 @@
             }
 
             const randomIndex = Math.floor(Math.random() * messages.length);
-            let selectedMessage = messages[randomIndex];
-
-            selectedMessage = selectedMessage.replace(/{nome}/gi, name);
-            storyMessage.textContent = selectedMessage;
+            storyMessage.textContent = messages[randomIndex].replace(/{nome}/gi, name);
 
             resultSection.classList.remove('hidden');
             resultSection.classList.add('flex');
@@ -228,60 +224,45 @@
 
         btnDownload.addEventListener('click', function() {
             const originalContent = btnDownload.innerHTML;
-            
             btnDownload.innerHTML = 'Gerando Imagem...';
             btnDownload.disabled = true;
             btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
 
+            // Detecta com precisão se é um dispositivo Apple (iPhone, iPad, iPod ou Mac em modo touch)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
             html2canvas(storyCard, {
-                scale: 3,           
+                // Reduz a escala no iOS para evitar o limite de memória do Safari
+                scale: isIOS ? 2 : 3,           
                 useCORS: true,      
                 backgroundColor: null, 
                 logging: false
             }).then(function(canvas) {
-                canvas.toBlob(function(blob) {
-                    const fileName = "Setembro-Amarelo-TJPI-Story.png";
-                    const file = new File([blob], fileName, { type: 'image/png' });
+                // Pega a imagem gerada
+                const imageURI = canvas.toDataURL("image/png");
 
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({
-                            title: 'Setembro Amarelo',
-                            files: [file]
-                        }).then(function() {
-                            resetButton(originalContent);
-                        }).catch(function() {
-                            fallbackDownload(canvas.toDataURL("image/png"));
-                            resetButton(originalContent);
-                        });
-                    } else {
-                        fallbackDownload(canvas.toDataURL("image/png"));
-                        resetButton(originalContent);
-                    }
-                }, 'image/png');
-                
-            }).catch(function() {
-                showError("Não foi possível gerar a imagem.");
-                resetButton(originalContent);
-            });
-
-            function fallbackDownload(imageURI) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                
                 if (isIOS) {
-                    // Ao invés de usar window.open, agora usamos o modal! (Livre de erros)
+                    // No iOS vamos SEMPRE usar a estratégia infalível da tela cheia
                     iosImage.src = imageURI;
                     iosModal.classList.remove('hidden');
                     iosModal.classList.add('flex');
-                    return;
+                } else {
+                    // No Android e PC fazemos o download direto
+                    const link = document.createElement("a");
+                    link.download = "Setembro-Amarelo-TJPI-Story.png";
+                    link.href = imageURI;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
 
-                const link = document.createElement("a");
-                link.download = "Setembro-Amarelo-TJPI-Story.png";
-                link.href = imageURI;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+                resetButton(originalContent);
+                
+            }).catch(function(err) {
+                console.error("Erro no html2canvas:", err);
+                showError("Erro. Certifique-se que a logo_tjpi.png está no servidor.");
+                resetButton(originalContent);
+            });
 
             function resetButton(content) {
                 btnDownload.innerHTML = content;
