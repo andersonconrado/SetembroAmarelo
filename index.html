@@ -222,31 +222,38 @@
             }
         });
 
-        btnDownload.addEventListener('click', function() {
+       btnDownload.addEventListener('click', function() {
             const originalContent = btnDownload.innerHTML;
             btnDownload.innerHTML = 'Gerando Imagem...';
             btnDownload.disabled = true;
             btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
 
-            // 1. CORREÇÃO DO BUG DE SCROLL NO iPHONE
-            // O html2canvas falha no iOS se a tela não estiver no topo
+            // 1. CORREÇÃO DO SCROLL
             window.scrollTo({ top: 0, behavior: 'instant' });
 
-            setTimeout(function() { // Dá 300ms pro celular subir a tela antes de tirar a foto
+            // 2. CORREÇÃO DO DESFOQUE (BLUR) PARA O iPHONE NÃO BLOQUEAR
+            const textBackdrop = document.querySelector('.text-backdrop');
+            textBackdrop.style.backdropFilter = 'none';
+            textBackdrop.style.webkitBackdropFilter = 'none';
+
+            setTimeout(function() {
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
                 html2canvas(storyCard, {
-                    // 2. CORREÇÃO DE MEMÓRIA
-                    // Scale 1.5 no iPhone já é o suficiente para ter alta qualidade sem travar a memória
                     scale: isIOS ? 1.5 : 2,           
                     useCORS: true,      
-                    backgroundColor: null, 
+                    backgroundColor: '#fde047', // Garante o fundo amarelo no JPEG
                     logging: false,
-                    // Garante que não vai bugar com a rolagem
                     scrollY: -window.scrollY 
                 }).then(function(canvas) {
+                    
+                    // Religa o efeito de desfoque assim que a foto for tirada
+                    textBackdrop.style.backdropFilter = '';
+                    textBackdrop.style.webkitBackdropFilter = '';
+
                     try {
-                        const imageURI = canvas.toDataURL("image/png");
+                        // 3. CORREÇÃO DE MEMÓRIA: Exportando como JPEG (0.9 de qualidade) em vez de PNG
+                        const imageURI = canvas.toDataURL("image/jpeg", 0.9);
 
                         if (isIOS) {
                             iosImage.src = imageURI;
@@ -254,22 +261,25 @@
                             iosModal.classList.add('flex');
                         } else {
                             const link = document.createElement("a");
-                            link.download = "Setembro-Amarelo-TJPI-Story.png";
+                            link.download = "Setembro-Amarelo-TJPI-Story.jpg";
                             link.href = imageURI;
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
                         }
                     } catch (e) {
-                        showError("Erro ao processar imagem (Memória ou CORS).");
-                        console.error(e);
+                        showError("Erro do sistema Apple. Tente recarregar a página.");
+                        console.error("Erro no toDataURL:", e);
                     }
 
                     resetButton(originalContent);
                     
                 }).catch(function(err) {
+                    // Religa o desfoque caso dê erro
+                    textBackdrop.style.backdropFilter = '';
+                    textBackdrop.style.webkitBackdropFilter = '';
+                    
                     console.error("Erro interno no html2canvas:", err);
-                    // Mensagem atualizada para não confundir com a logo
                     showError("Erro ao gerar. Tente recarregar a página.");
                     resetButton(originalContent);
                 });
