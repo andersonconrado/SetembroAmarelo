@@ -228,41 +228,53 @@
             btnDownload.disabled = true;
             btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
 
-            // Detecta com precisão se é um dispositivo Apple (iPhone, iPad, iPod ou Mac em modo touch)
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            // 1. CORREÇÃO DO BUG DE SCROLL NO iPHONE
+            // O html2canvas falha no iOS se a tela não estiver no topo
+            window.scrollTo({ top: 0, behavior: 'instant' });
 
-            html2canvas(storyCard, {
-                // Reduz a escala no iOS para evitar o limite de memória do Safari
-                scale: isIOS ? 2 : 3,           
-                useCORS: true,      
-                backgroundColor: null, 
-                logging: false
-            }).then(function(canvas) {
-                // Pega a imagem gerada
-                const imageURI = canvas.toDataURL("image/png");
+            setTimeout(function() { // Dá 300ms pro celular subir a tela antes de tirar a foto
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-                if (isIOS) {
-                    // No iOS vamos SEMPRE usar a estratégia infalível da tela cheia
-                    iosImage.src = imageURI;
-                    iosModal.classList.remove('hidden');
-                    iosModal.classList.add('flex');
-                } else {
-                    // No Android e PC fazemos o download direto
-                    const link = document.createElement("a");
-                    link.download = "Setembro-Amarelo-TJPI-Story.png";
-                    link.href = imageURI;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
+                html2canvas(storyCard, {
+                    // 2. CORREÇÃO DE MEMÓRIA
+                    // Scale 1.5 no iPhone já é o suficiente para ter alta qualidade sem travar a memória
+                    scale: isIOS ? 1.5 : 2,           
+                    useCORS: true,      
+                    backgroundColor: null, 
+                    logging: false,
+                    // Garante que não vai bugar com a rolagem
+                    scrollY: -window.scrollY 
+                }).then(function(canvas) {
+                    try {
+                        const imageURI = canvas.toDataURL("image/png");
 
-                resetButton(originalContent);
-                
-            }).catch(function(err) {
-                console.error("Erro no html2canvas:", err);
-                showError("Erro. Certifique-se que a logo_tjpi.png está no servidor.");
-                resetButton(originalContent);
-            });
+                        if (isIOS) {
+                            iosImage.src = imageURI;
+                            iosModal.classList.remove('hidden');
+                            iosModal.classList.add('flex');
+                        } else {
+                            const link = document.createElement("a");
+                            link.download = "Setembro-Amarelo-TJPI-Story.png";
+                            link.href = imageURI;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }
+                    } catch (e) {
+                        showError("Erro ao processar imagem (Memória ou CORS).");
+                        console.error(e);
+                    }
+
+                    resetButton(originalContent);
+                    
+                }).catch(function(err) {
+                    console.error("Erro interno no html2canvas:", err);
+                    // Mensagem atualizada para não confundir com a logo
+                    showError("Erro ao gerar. Tente recarregar a página.");
+                    resetButton(originalContent);
+                });
+
+            }, 300);
 
             function resetButton(content) {
                 btnDownload.innerHTML = content;
