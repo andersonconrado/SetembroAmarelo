@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setembro Amarelo - Espalhe Luz</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fef9c3; /* Amarelo muito suave para o fundo da página */
+        }
+        
+        /* Classe do Card (Story) */
+        .story-container {
+            aspect-ratio: 9 / 16;
+            max-width: 380px;
+            background: linear-gradient(135deg, #fde047 0%, #f59e0b 100%); 
+            position: relative;
+        }
+
+        /* TEXTURA: Pattern de bolinhas sutis misturadas ao fundo */
+        .story-texture {
+            position: absolute;
+            inset: 0;
+            opacity: 0.15;
+            background-image: radial-gradient(#000000 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            z-index: 1;
+        }
+
+        /* Container do texto */
+        .text-backdrop {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Scrollbar customizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #fbbf24;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-gray-800 flex flex-col items-center py-12 px-4 relative">
+
+    <!-- Toast de Notificação (Substitui o alert nativo) -->
+    <div id="errorToast" class="fixed top-5 right-5 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300 z-50 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span id="errorMsg">Ocorreu um erro ao gerar a imagem.</span>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header class="text-center mb-10 w-full max-w-md">
+        <h1 class="text-4xl md:text-5xl font-bold mb-3 text-yellow-600 drop-shadow-sm tracking-tight">Mensagem de Setembro Amarelo 🎗️</h1>
+        <p class="text-gray-600 font-medium text-lg">Gere e compartilhe uma mensagem positiva e cheia de vida nos seus Stories, marque o @tjpioficial no instagram.</p>
+    </header>
+
+    <main class="w-full max-w-md flex flex-col items-center">
+        
+        <!-- Input e Botão Gerar -->
+        <div class="bg-white w-full p-6 rounded-3xl shadow-xl mb-10 flex flex-col sm:flex-row gap-3 border border-yellow-100">
+            <input 
+                type="text" 
+                id="userName" 
+                placeholder="Qual o seu primeiro nome?" 
+                class="flex-1 px-5 py-4 border-2 border-yellow-200 rounded-2xl focus:outline-none focus:border-yellow-500 bg-yellow-50/50 text-lg font-medium placeholder-gray-400 transition-colors"
+            >
+            <button 
+                id="generateBtn" 
+                class="bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-200 shadow-md flex-shrink-0 text-lg"
+            >
+                Gerar ✨
+            </button>
+        </div>
+
+        <!-- Container oculto inicialmente -->
+        <div id="resultSection" class="hidden w-full flex-col items-center opacity-0 transition-opacity duration-700">
+            
+            <!-- CARD 9:16 PARA EXPORTAÇÃO -->
+            <div id="storyCard" class="story-container w-full rounded-3xl shadow-2xl flex flex-col justify-between p-8 overflow-hidden">
+                
+                <!-- Camada de textura (Bolinhas) -->
+                <div class="story-texture"></div>
+
+                <!-- Elemento decorativo suave extra -->
+                <div class="absolute top-[-20%] left-[-20%] w-64 h-64 bg-white opacity-30 rounded-full blur-3xl z-10"></div>
+                
+                <!-- TOPO: Apenas UMA logo -->
+                <div class="w-full z-20 relative flex justify-center mt-2">
+                    <!-- INSTRUÇÃO DE USO: 
+                         Substitua o link do 'src' abaixo pelo link direto da sua logo PNG com fundo transparente.
+                         Recomenda-se uma imagem com largura em torno de 300px a 500px. 
+                    -->
+                    <img 
+                        src="logo_tjpi.png" 
+                        alt="Logo da Campanha" 
+                        class="h-14 object-contain"
+                    >
+                </div>
+
+                <!-- MEIO: Mensagem Motivacional Positiva -->
+                <div class="flex-grow flex items-center justify-center z-20 relative my-6">
+                    <div class="text-backdrop p-6 rounded-3xl w-full text-center">
+                        <p id="storyMessage" class="text-[1.35rem] md:text-2xl font-bold text-gray-900 leading-snug tracking-wide">
+                            <!-- A frase será injetada aqui -->
+                        </p>
+                    </div>
+                </div>
+
+                <!-- RODAPÉ -->
+                <div class="w-full flex flex-col items-center z-20 relative mb-2">
+                    <div class="bg-gray-900 text-yellow-400 px-6 py-2.5 rounded-full shadow-lg font-bold text-sm tracking-widest uppercase mb-4">
+                        #SetembroAmarelo
+                    </div>
+                    <p class="text-xs font-semibold text-yellow-900/60 uppercase tracking-widest">
+                        Celebre a vida todos os dias
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botão para Baixar a Imagem -->
+            <button 
+                id="downloadBtn" 
+                class="mt-10 mb-8 bg-gray-900 hover:bg-black text-white font-bold text-xl py-4 px-10 rounded-2xl shadow-[0_10px_20px_rgba(0,0,0,0.2)] flex items-center gap-3 transition-transform transform hover:scale-105 active:scale-95"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Baixar Story
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Array com 25 mensagens EXTREMAMENTE POSITIVAS, focadas na luz e no potencial.
+        // O marcador {nome} será substituído pelo texto digitado.
+        const messages = [
+            "{nome}, sua luz ilumina o mundo de um jeito único! Continue brilhando intensamente. ✨",
+            "Alegria, força e um coração de ouro: isso é você, {nome}! Que seu dia seja tão radiante quanto seu sorriso. 💛",
+            "{nome}, você tem um dom maravilhoso de tornar a vida mais bonita para quem está ao seu redor. 🌻",
+            "Acredite no seu potencial incrível, {nome}! Você nasceu para conquistar coisas gigantes. 🚀",
+            "{nome}, sua energia é contagiante e o mundo é infinitamente melhor porque você está nele! 🌟",
+            "Que a vida te surpreenda hoje com a mesma alegria que você traz para todos nós, {nome}. Você é especial! 💛",
+            "{nome}, celebre quem você é! Uma pessoa forte, cheia de talentos e capaz de espalhar muito amor. ✨",
+            "O universo sorri toda vez que você decide ser você mesmo(a), {nome}. Espalhe essa sua luz! ☀️",
+            "{nome}, nunca se esqueça do poder incrível que existe dentro de você. Seu futuro é brilhante! 🌻",
+            "Sua existência é um presente para o mundo, {nome}! Viva cada momento com a alegria que você merece. 🎁",
+            "{nome}, você é uma obra de arte única! Admire sua própria beleza e celebre a vida todos os dias. 🎨",
+            "Siga em frente com esse sorriso maravilhoso, {nome}! A vida reserva aventuras incríveis para você. 🗺️",
+            "{nome}, sua capacidade de se reinventar e brilhar é inspiradora. Continue espalhando essa magia! ✨",
+            "Hoje é um ótimo dia para você lembrar o quão incrível e amado(a) você é, {nome}. Aproveite! 💛",
+            "{nome}, a sua essência é pura luz. Que os seus dias sejam repletos da felicidade que você planta! 🌱",
+            "Você tem um coração gigante e uma alma vibrante, {nome}. O mundo precisa dessa sua energia! ⚡",
+            "{nome}, abrace todas as suas qualidades maravilhosas. Você é uma pessoa rara e preciosa! 💎",
+            "Que a sua jornada seja sempre guiada pelo amor e pela alegria. Você merece o melhor da vida, {nome}! 🌻",
+            "{nome}, seu sorriso tem o poder de transformar o dia de alguém. Continue iluminando tudo ao seu redor! ☀️",
+            "Cada passo seu deixa uma marca de positividade no mundo, {nome}. Tenha orgulho de quem você é! 🌟",
+            "{nome}, a vida é uma grande festa e você é o convidado de honra. Celebre cada conquista sua! 🎉",
+            "Sua força interior é admirável e sua luz é infinita, {nome}. Você é simplesmente espetacular! 💫",
+            "{nome}, você carrega dentro de si todas as cores para pintar um mundo mais feliz. Brilhe muito! 🎨",
+            "Que a alegria de viver pulse forte no seu peito hoje e sempre, {nome}. Você é extraordinário(a)! 💛",
+            "{nome}, a sua presença transforma qualquer ambiente. Obrigado(a) por ser essa pessoa tão especial! ✨"
+        ];
+
+        const inputName = document.getElementById('userName');
+        const btnGenerate = document.getElementById('generateBtn');
+        const storyMessage = document.getElementById('storyMessage');
+        const btnDownload = document.getElementById('downloadBtn');
+        const storyCard = document.getElementById('storyCard');
+        const resultSection = document.getElementById('resultSection');
+        const errorToast = document.getElementById('errorToast');
+
+        // Função para mostrar notificação de erro 
+        function showError(msg) {
+            document.getElementById('errorMsg').textContent = msg;
+            errorToast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                errorToast.classList.add('translate-x-full');
+            }, 4000);
+        }
+
+        // Gera a mensagem e exibe o card
+        function generateStory() {
+            let name = inputName.value.trim();
+            
+            if (!name) {
+                name = "Amigo(a)";
+            } else {
+                name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+            }
+
+            // Sorteia a frase
+            const randomIndex = Math.floor(Math.random() * messages.length);
+            let selectedMessage = messages[randomIndex];
+
+            // Substitui {nome} pelo nome digitado (case insensitive)
+            selectedMessage = selectedMessage.replace(/{nome}/gi, name);
+
+            // Injeta a mensagem no HTML
+            storyMessage.textContent = selectedMessage;
+
+            // Revela a seção do resultado
+            resultSection.classList.remove('hidden');
+            resultSection.classList.add('flex');
+            
+            setTimeout(() => {
+                resultSection.classList.remove('opacity-0');
+                resultSection.classList.add('opacity-100');
+            }, 50);
+
+            setTimeout(() => {
+                resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 200);
+        }
+
+        btnGenerate.addEventListener('click', generateStory);
+        
+        inputName.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                generateStory();
+                inputName.blur();
+            }
+        });
+
+        // Função de download usando html2canvas
+        btnDownload.addEventListener('click', () => {
+            const originalContent = btnDownload.innerHTML;
+            btnDownload.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Gerando Imagem...
+            `;
+            btnDownload.disabled = true;
+            btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
+
+            html2canvas(storyCard, {
+                scale: 3,           
+                useCORS: true,      
+                backgroundColor: null, 
+                logging: false
+            }).then(canvas => {
+                const imageURI = canvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.download = "EspalheLuz-Story.png";
+                link.href = imageURI;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                btnDownload.innerHTML = originalContent;
+                btnDownload.disabled = false;
+                btnDownload.classList.remove('opacity-80', 'cursor-not-allowed');
+            }).catch(err => {
+                console.error("Erro no html2canvas:", err);
+                showError("Não foi possível gerar a imagem. Verifique sua conexão e tente novamente.");
+                
+                btnDownload.innerHTML = originalContent;
+                btnDownload.disabled = false;
+                btnDownload.classList.remove('opacity-80', 'cursor-not-allowed');
+            });
+        });
+    </script>
+</body>
+</html>
