@@ -26,7 +26,6 @@
             position: absolute;
             inset: 0;
             opacity: 0.15;
-            /* CORREÇÃO 1: Usando SVG para as bolinhas. O html2canvas renderiza isso perfeitamente. */
             background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='2' cy='2' r='1.5' fill='%23000000'/%3E%3C/svg%3E");
             z-index: 1;
         }
@@ -50,6 +49,16 @@
 
 <body class="min-h-screen text-gray-800 flex flex-col items-center py-12 px-4 relative">
 
+    <!-- MODAL PARA iPHONE (Fica escondido até precisar) -->
+    <div id="iosModal" class="fixed inset-0 bg-yellow-100 z-[100] hidden flex-col items-center justify-center p-4">
+        <button id="closeModal" class="absolute top-6 right-6 text-gray-800 font-bold text-lg bg-white px-4 py-2 rounded-full shadow-md">✕ Fechar</button>
+        <img id="iosImage" src="" alt="Story Gerado" class="max-w-[90%] md:max-w-md rounded-2xl shadow-2xl mb-6">
+        <p class="text-xl text-gray-800 font-bold text-center px-4 bg-white/70 py-3 rounded-xl">
+            Pressione e segure a imagem para salvar.
+        </p>
+    </div>
+
+    <!-- TOAST DE ERRO -->
     <div id="errorToast" class="fixed top-5 right-0 bg-red-500 text-white px-6 py-3 rounded-xl shadow-lg transform translate-x-full transition-transform duration-300 z-50 flex items-center gap-2">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         <span id="errorMsg">Ocorreu um erro ao gerar a imagem.</span>
@@ -85,7 +94,6 @@
 
                 <div class="absolute top-[-20%] left-[-20%] w-72 h-72 z-10 pointer-events-none" style="background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%); border-radius: 50%;"></div>
                 
-                <!-- CORREÇÃO 2: Agrupamos a Logo e a Caixa de texto juntos no topo, separados por um 'gap-6' -->
                 <div class="w-full z-20 relative flex flex-col items-center gap-20 mt-4">
                     <img 
                         src="logo_tjpi.png" 
@@ -110,8 +118,6 @@
                     </p>
                 </div>
                 </div>
-
-               
             </div>
 
             <button 
@@ -164,11 +170,21 @@
         const storyCard = document.getElementById('storyCard');
         const resultSection = document.getElementById('resultSection');
         const errorToast = document.getElementById('errorToast');
+        
+        // Modal de iOS
+        const iosModal = document.getElementById('iosModal');
+        const iosImage = document.getElementById('iosImage');
+        const closeModal = document.getElementById('closeModal');
+
+        closeModal.addEventListener('click', function() {
+            iosModal.classList.add('hidden');
+            iosModal.classList.remove('flex');
+        });
 
         function showError(msg) {
             document.getElementById('errorMsg').textContent = msg;
             errorToast.classList.remove('translate-x-full');
-            setTimeout(() => {
+            setTimeout(function() {
                 errorToast.classList.add('translate-x-full');
             }, 4000);
         }
@@ -191,12 +207,12 @@
             resultSection.classList.remove('hidden');
             resultSection.classList.add('flex');
             
-            setTimeout(() => {
+            setTimeout(function() {
                 resultSection.classList.remove('opacity-0');
                 resultSection.classList.add('opacity-100');
             }, 50);
 
-            setTimeout(() => {
+            setTimeout(function() {
                 resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 200);
         }
@@ -210,44 +226,68 @@
             }
         });
 
-       btnDownload.addEventListener('click', () => {
+        btnDownload.addEventListener('click', function() {
             const originalContent = btnDownload.innerHTML;
-            btnDownload.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Gerando Imagem...
-            `;
+            
+            btnDownload.innerHTML = 'Gerando Imagem...';
             btnDownload.disabled = true;
             btnDownload.classList.add('opacity-80', 'cursor-not-allowed');
 
             html2canvas(storyCard, {
-                scale: 3,            
+                scale: 3,           
                 useCORS: true,      
                 backgroundColor: null, 
                 logging: false
-            }).then(canvas => {
-                const imageURI = canvas.toDataURL("image/png");
-                const link = document.createElement("a");
-                link.download = "EspalheLuz-Story.png";
-                link.href = imageURI;
+            }).then(function(canvas) {
+                canvas.toBlob(function(blob) {
+                    const fileName = "Setembro-Amarelo-TJPI-Story.png";
+                    const file = new File([blob], fileName, { type: 'image/png' });
+
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            title: 'Setembro Amarelo',
+                            files: [file]
+                        }).then(function() {
+                            resetButton(originalContent);
+                        }).catch(function() {
+                            fallbackDownload(canvas.toDataURL("image/png"));
+                            resetButton(originalContent);
+                        });
+                    } else {
+                        fallbackDownload(canvas.toDataURL("image/png"));
+                        resetButton(originalContent);
+                    }
+                }, 'image/png');
                 
+            }).catch(function() {
+                showError("Não foi possível gerar a imagem.");
+                resetButton(originalContent);
+            });
+
+            function fallbackDownload(imageURI) {
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                
+                if (isIOS) {
+                    // Ao invés de usar window.open, agora usamos o modal! (Livre de erros)
+                    iosImage.src = imageURI;
+                    iosModal.classList.remove('hidden');
+                    iosModal.classList.add('flex');
+                    return;
+                }
+
+                const link = document.createElement("a");
+                link.download = "Setembro-Amarelo-TJPI-Story.png";
+                link.href = imageURI;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            }
 
-                btnDownload.innerHTML = originalContent;
+            function resetButton(content) {
+                btnDownload.innerHTML = content;
                 btnDownload.disabled = false;
                 btnDownload.classList.remove('opacity-80', 'cursor-not-allowed');
-            }).catch(err => {
-                console.error("Erro no html2canvas:", err);
-                showError("Não foi possível gerar a imagem. Verifique sua conexão e tente novamente.");
-                
-                btnDownload.innerHTML = originalContent;
-                btnDownload.disabled = false;
-                btnDownload.classList.remove('opacity-80', 'cursor-not-allowed');
-            });
+            }
         });
     </script>
 </body>
